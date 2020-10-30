@@ -271,8 +271,10 @@ class MultiColumnTfidfVectorizer(BaseEstimator, VectorizerMixin, TransformerMixi
         """
         check_is_fitted(self, "vectorizers_")
         X = check_array(X, dtype=None)
-
-        return sp.hstack([self._transform_vectorizer(i, X) for i in range(X.shape[1])])
+        out = [self._transform_vectorizer(i, X) for i in range(X.shape[1])]
+        ret = [list(i) for i in zip(*out)]
+        return ret
 
     def _more_tags(self):
         return {"X_types": ["string"]}
+

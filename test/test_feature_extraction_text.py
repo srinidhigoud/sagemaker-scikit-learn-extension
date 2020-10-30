@@ -14,7 +14,6 @@
 import numpy as np
 import pytest
 import scipy.sparse as sp
-
 from sagemaker_sklearn_extension.feature_extraction.text import MultiColumnTfidfVectorizer
 
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -33,18 +32,13 @@ corpus = np.array(
 def test_multi_column_tfidf_vectorizer():
     vec = MultiColumnTfidfVectorizer()
     output = vec.fit_transform(corpus)
-
-    assert isinstance(output, sp.coo.coo_matrix)
-
-    observed = output.todense()
-    expected = np.hstack(
-        [
-            TfidfVectorizer().fit_transform(corpus[:, 0]).todense(),
-            TfidfVectorizer().fit_transform(corpus[:, 1]).todense(),
+    observed = [[col.toarray().flatten() for col in row] for row in output]
+    expected = [
+            [a,b] for a,b in zip(*[TfidfVectorizer().fit_transform(corpus[:, i]).toarray() for i in range(corpus.shape[1])])
         ]
-    )
-
-    np.testing.assert_array_equal(observed, expected)
+    for row in zip(observed,expected):
+        for a,b in zip(*row):
+            np.testing.assert_array_equal(a, b)
 
 
 def test_multi_column_tfidf_vectorizer_fit_dim_error():
@@ -127,3 +121,4 @@ def test_multi_column_tfidf_vectorizer_one_column_zero_output_tokens(kwargs, out
     vec = MultiColumnTfidfVectorizer(**kwargs)
     output = vec.fit_transform(corpus)
     assert output.shape == output_shape
+
